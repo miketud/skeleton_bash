@@ -67,3 +67,9 @@ Backend:
 cd backend
 npm run dev
 ```
+
+## Notes
+
+- The `.vscode` folder is optional. It contains a few workspace preferences that improve formatting and ensure VS Code uses the project's TypeScript version. These settings apply only inside VS Code and have no effect on other editors, tools, or the
+  installation process. Developers who do not use VS Code can ignore the folder safely.
+
