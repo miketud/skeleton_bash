@@ -685,32 +685,74 @@ detect_pg_host() {
 }
 detect_pg_host
 
-# Ask only for DB user — NOT DB name
+# ================================
+# PASSWORD OR NO PASSWORD CHECK
+# ================================
 read -rp "Database user: " dbuser
 
-tries=0
-max=3
+# First prompt ONLY — allows blank for passwordless attempt
+read -rsp "Database password (leave blank if none): " dbpass
+printf "\n"
 
-while true; do
-  read -rsp "Database password: " dbpass
-  printf "\n"
+# CASE 1: Tried passwordless (blank)
+if [ -z "$dbpass" ]; then
+  echo -e "${YELLOW}  - Trying passwordless login...${NC}"
+  unset PGPASSWORD
 
+  # Suppress interactive password prompts
+  test_conn=$(psql --no-password -h "$PG_HOST" -U "$dbuser" -tAc "SELECT 1" 2>/dev/null || echo "")
+
+  if [ "$test_conn" = "1" ]; then
+    echo -e "${GREEN}  - Server accepted passwordless login.${NC}"
+    password_ok=true
+  else
+    echo -e "${YELLOW}  - Passwordless login failed. This server requires a password.${NC}"
+    password_ok=false
+  fi
+else
+  # CASE 2: User typed a password on first prompt
   export PGPASSWORD="$dbpass"
-  test_conn=$(psql -h "$PG_HOST" -U "$dbuser" -tAc "SELECT 1" 2>/dev/null || echo "")
+
+  # Suppress interactive password prompts
+  test_conn=$(psql --no-password -h "$PG_HOST" -U "$dbuser" -tAc "SELECT 1" 2>/dev/null || echo "")
 
   if [ "$test_conn" = "1" ]; then
     echo -e "${GREEN}  - Password accepted.${NC}"
-    break
+    password_ok=true
+  else
+    password_ok=false
   fi
+fi
 
-  tries=$((tries + 1))
-  if [ $tries -ge $max ]; then
+# If passwordless or initial password failed → enter password-required loop
+if [ "$password_ok" != true ]; then
+  tries=0
+  max=3
+
+  while [ $tries -lt $max ]; do
+    read -rsp "Enter database password: " dbpass
+    printf "\n"
+
+    export PGPASSWORD="$dbpass"
+
+    # Suppress interactive password prompts
+    test_conn=$(psql --no-password -h "$PG_HOST" -U "$dbuser" -tAc "SELECT 1" 2>/dev/null || echo "")
+
+    if [ "$test_conn" = "1" ]; then
+      echo -e "${GREEN}  - Password accepted.${NC}"
+      password_ok=true
+      break
+    fi
+
+    tries=$((tries + 1))
+    echo -e "${YELLOW}Incorrect password. Try again (${tries}/3)...${NC}"
+  done
+
+  if [ "$password_ok" != true ]; then
     echo -e "${RED}Too many failed attempts.${NC}"
     exit 1
   fi
-
-  echo -e "${YELLOW}Incorrect password. Try again (${tries}/3)...${NC}"
-done
+fi
 
 # ================================
 # REQUIRE NEW DATABASE NAME
@@ -730,7 +772,11 @@ while true; do
   break
 done
 
-connection_string="postgresql://${dbuser}:${dbpass}@${PG_HOST}:5432/${dbname}?schema=public"
+if [ -z "$dbpass" ]; then
+  connection_string="postgresql://${dbuser}@${PG_HOST}:5432/${dbname}?schema=public"
+else
+  connection_string="postgresql://${dbuser}:${dbpass}@${PG_HOST}:5432/${dbname}?schema=public"
+fi
 echo "DATABASE_URL=\"$connection_string\"" > .env
 
 # ================================
@@ -819,22 +865,18 @@ STACK:
 - A disciplined scaffold for frontend and backend development
 - Strict TypeScript settings to keep the codebase sharp
 - Prisma initialized with a simple sample model and route to verify the stack
-- Database setup enforces **new database creation only**  
-  (existing database names are rejected to protect existing data)
-- Local PostgreSQL connection generated and written to `.env`
-- Automatic Prisma migration and client generation on the new database
-- Baseline API endpoints to confirm the backend’s heartbeat
+- Local PostgreSQL connection generated and written to .env
+- Baseline API endpoints to confirm the backend's heartbeat
 - Prettier configuration enforcing consistent formatting across the project
 - VS Code workspace settings to keep every file aligned
-- Project structure generated in the correct order: frontend → backend → root
 
 ## Git
-- Repository auto-initialized with `main` as the default branch
+- Repository auto-initialized with \`main\` as the default branch
 - Global Git defaults applied for clean, predictable workflows
 - Minimal credential helper used to avoid silent background prompts
-- Recommended workflow when pushing for the first time:
-  - `git config --global credential.helper manager-core`
-  - `git push -u origin main`
+- When it’s time to push:
+  - \`git config --global credential.helper manager-core\`
+  - \`git push -u origin main\`
 
 EOF
 
