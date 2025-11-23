@@ -1,4 +1,4 @@
-# Project Scaffold Script
+# Skeleton Script for Bash
 
 A Bash script that generates a full-stack project with a consistent structure and minimal setup.
 
@@ -34,39 +34,94 @@ A Bash script that generates a full-stack project with a consistent structure an
 
 ## How to Use
 
-1. Make the script executable:
+### 1. Where to Run the Script
 
-   ```
-   chmod +x create-skeleton.sh
-   ```
+You must run the script **from a Bash-compatible terminal**.  
+Below are the supported terminals for each operating system:
 
-2. Run it:
+- **macOS**  
+  Use the built-in **Terminal.app** or **iTerm2**.  
+  Both include Bash or zsh (which can run Bash scripts).
 
-   ```
-   ./create-skeleton.sh
-   ```
+- **Linux (Ubuntu, Debian, Fedora, Arch, etc.)**  
+  Use any terminal (GNOME Terminal, KDE Konsole, xterm, etc.).  
+  Bash is the default shell on most distributions.
 
-3. Follow the prompts:
-   - Project name  
-   - Database user  
-   - Database password  
-   - New database name (must not already exist)
+- **Windows**  
+  You must use **WSL (Windows Subsystem for Linux)**.  
+  Install WSL using Microsoft’s instructions:  
+  https://learn.microsoft.com/windows/wsl/install  
+  Then open the **Ubuntu** (or other WSL distribution) terminal.  
+  *Do not use PowerShell or Command Prompt for this script.*
 
-## Run the Servers
+---
 
-Frontend:
+### 2. Place the Script
+
+Put `skeleton_bash.sh` in any folder where you want new projects to be created.
+
+Example:  
+If the script lives in:
 
 ```
-cd frontend
-npm run dev
+~/Code/
 ```
 
-Backend:
+and you run it there, the generated project folder will also appear in:
 
 ```
-cd backend
-npm run dev
+~/Code/
 ```
+
+---
+
+### 3. Make the Script Executable
+
+```
+chmod +x skeleton_bash.sh
+```
+
+---
+
+### 4. Run the Script
+
+```
+./skeleton_bash.sh
+```
+
+---
+
+### 5. Follow the Prompts
+
+- **Project name**  
+  A new folder with this name will be created next to the script.
+
+- **Database user**  
+  Usually `postgres` on local installations.
+
+- **Database password**  
+  Must match your local PostgreSQL installation.
+
+- **Database name**  
+  Must be a *new* database name (existing names are rejected to protect data).
+
+---
+
+### After Completion
+
+Your project structure will look like:
+
+```
+project-name/
+  frontend/
+  backend/
+  .vscode/
+  README.md
+  .gitignore
+  .prettierrc.json
+```
+
+The project is ready for development immediately.
 
 ## Notes
 
